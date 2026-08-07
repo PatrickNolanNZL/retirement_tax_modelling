@@ -1,0 +1,549 @@
+library(shiny)
+
+ui <- fluidPage(
+  tags$head(
+    tags$style(HTML("
+      * { box-sizing: border-box; }
+
+      :root {
+        --blue-1: #eaf6ff;
+        --blue-2: #d6ecff;
+        --blue-3: #b9ddfb;
+        --blue-4: #6aaee8;
+        --blue-5: #2f78b7;
+        --blue-6: #174b7a;
+        --card-ink: #212121;
+        --muted-text: #5f6f7f;
+        --border-soft: #d9e8f5;
+      }
+
+      html, body { min-height: 100%; }
+
+      body {
+        margin: 0;
+        background: linear-gradient(135deg, var(--blue-1) 0%, var(--blue-2) 100%);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        color: var(--card-ink);
+      }
+
+      .app-shell {
+        max-width: 1450px;
+        margin: 0 auto;
+        padding: 24px 20px 40px 20px;
+      }
+
+      .hero {
+        text-align: center;
+        margin-bottom: 28px;
+        padding-top: 8px;
+      }
+
+      .hero h1 {
+        color: var(--blue-6);
+        font-size: 36px;
+        line-height: 1.15;
+        margin: 0 0 10px 0;
+        font-weight: 700;
+        font-family: Georgia, 'Times New Roman', serif;
+      }
+
+      .hero p {
+        color: var(--muted-text);
+        font-size: 17px;
+        margin: 0;
+      }
+
+      .panel-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(47,120,183,0.12);
+        border: 1px solid var(--border-soft);
+        margin-bottom: 24px;
+      }
+
+      .panel-card h2 {
+        margin: 0 0 18px 0;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--blue-6);
+        border-bottom: 2px solid var(--blue-2);
+        padding-bottom: 10px;
+      }
+
+      .helper-box {
+        background: #f3faff;
+        border-left: 4px solid var(--blue-4);
+        border-radius: 10px;
+        padding: 14px 14px 12px 14px;
+        margin-bottom: 20px;
+        color: #3f5366;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .helper-box strong { color: var(--blue-6); }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #29384a;
+      }
+
+      .form-group { margin-bottom: 14px; }
+
+      input[type='number'] {
+        width: 100%;
+        border: 2px solid var(--border-soft);
+        border-radius: 10px;
+        padding: 10px 12px;
+        min-height: 44px;
+        font-size: 14px;
+        color: #212121;
+        background: #ffffff;
+      }
+
+      input[type='number']:focus {
+        border-color: var(--blue-4);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(106,174,232,0.20);
+      }
+
+      .small-note {
+        font-size: 12px;
+        color: var(--muted-text);
+        line-height: 1.4;
+        margin-top: 10px;
+      }
+
+      .results-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .result-card {
+        background: #f3faff;
+        border-left: 5px solid var(--blue-4);
+        border-radius: 12px;
+        padding: 16px 16px 14px 16px;
+        min-height: 118px;
+      }
+
+      .result-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #5f6f7f;
+        margin-bottom: 8px;
+        font-weight: 700;
+      }
+
+      .result-value {
+        font-size: 28px;
+        line-height: 1.1;
+        font-weight: 800;
+        color: var(--blue-6);
+        margin-bottom: 6px;
+      }
+
+      .result-sub {
+        font-size: 12px;
+        line-height: 1.4;
+        color: #5f6f7f;
+      }
+
+      .chart-wrap {
+        background: #ffffff;
+        border-radius: 14px;
+      }
+
+      .details-wrap details {
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: #f8fcff;
+      }
+
+      .details-wrap summary {
+        cursor: pointer;
+        font-weight: 700;
+        color: var(--blue-6);
+        outline: none;
+      }
+
+      .details-wrap summary::-webkit-details-marker { color: var(--blue-5); }
+
+      .shiny-table table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        font-size: 13px;
+      }
+
+      .shiny-table th {
+        background: #eaf6ff;
+        color: var(--blue-6);
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid var(--border-soft);
+      }
+
+      .shiny-table td {
+        padding: 9px 10px;
+        border-bottom: 1px solid #eef5fb;
+      }
+
+      .shiny-table tr:nth-child(even) td { background: #f8fcff; }
+
+      @media (max-width: 991px) {
+        .results-grid { grid-template-columns: 1fr; }
+        .hero h1 { font-size: 30px; }
+      }
+    "))
+  ),
+
+  div(
+    class = "app-shell",
+
+    div(
+      class = "hero",
+      h1("TTE vs EET Retirement Tax Calculator"),
+      p("Compare retirement balances and tax timing using wage growth and a retirement-date tax value framework.")
+    ),
+
+    fluidRow(
+      column(
+        width = 4,
+        div(
+          class = "panel-card",
+          h2("Inputs"),
+
+          div(
+            class = "helper-box",
+            HTML(
+              "<strong>How this works</strong><br/>
+              Under the TTE-like path, member contributions are paid from taxable income, employer contributions are taxed, and fund earnings are taxed during saving.
+              Under the EET path, contributions and earnings are exempt during saving and tax is collected on withdrawal.
+              Salary grows each year, so contributions also rise over time. Fractional years are modelled as a final partial year."
+            )
+          ),
+
+          numericInput("years", "Years in KiwiSaver", value = 30, min = 0.1, step = 0.1),
+          numericInput("salary", "Starting gross annual salary ($)", value = 80000, min = 0, step = 1000),
+          numericInput("wage_growth", "Annual wage growth", value = 0.03, min = 0, step = 0.005),
+
+          numericInput("employee_rate", "Member contribution rate", value = 0.03, min = 0, max = 1, step = 0.005),
+          numericInput("employer_rate", "Employer contribution rate", value = 0.03, min = 0, max = 1, step = 0.005),
+
+          numericInput("employee_income_tax_rate", "Tax rate on income used for member contributions", value = 0.30, min = 0, max = 1, step = 0.01),
+          numericInput("employer_tax_rate", "Employer contribution tax rate under TTE", value = 0.30, min = 0, max = 1, step = 0.01),
+          numericInput("earnings_tax_rate", "Tax rate on fund earnings under TTE", value = 0.28, min = 0, max = 1, step = 0.01),
+
+          numericInput("gross_return", "Gross annual return (nominal)", value = 0.06, min = 0, step = 0.005),
+          numericInput("discount_rate", "Discount rate (nominal)", value = 0.06, min = 0, step = 0.005),
+
+          div(
+            class = "small-note",
+            "Member contributions are not reduced by income tax in the TTE path. The income tax is counted as tax paid, because contributions are paid out of taxable income. Contributions are treated as occurring evenly through each period, so they earn half of that period's return on average."
+          )
+        )
+      ),
+
+      column(
+        width = 8,
+
+        div(
+          class = "panel-card",
+          h2("Headline results"),
+
+          div(
+            class = "results-grid",
+
+            div(
+              class = "result-card",
+              div(class = "result-label", "Final balance under TTE"),
+              div(class = "result-value", textOutput("final_balance_tte", inline = TRUE)),
+              div(class = "result-sub", "Retirement balance after employer contribution tax and earnings tax during accumulation.")
+            ),
+
+            div(
+              class = "result-card",
+              div(class = "result-label", "Final balance under EET"),
+              div(class = "result-value", textOutput("final_balance_eet", inline = TRUE)),
+              div(class = "result-sub", "Retirement balance before withdrawal tax under EET.")
+            ),
+
+            div(
+              class = "result-card",
+              div(class = "result-label", "Increase in balance under EET"),
+              div(class = "result-value", textOutput("balance_increase", inline = TRUE)),
+              div(class = "result-sub", "Difference between the EET and TTE balances at retirement.")
+            ),
+
+            div(
+              class = "result-card",
+              div(class = "result-label", "Total tax paid under TTE"),
+              div(class = "result-value", textOutput("total_tax_paid_nominal", inline = TRUE)),
+              div(class = "result-sub", "Simple nominal sum of member income tax, employer contribution tax, and earnings tax.")
+            ),
+
+            div(
+              class = "result-card",
+              div(class = "result-label", "Value at retirement of TTE taxes"),
+              div(class = "result-value", textOutput("tax_value_at_retirement", inline = TRUE)),
+              div(class = "result-sub", "Each period's TTE tax carried forward to retirement using the discount rate.")
+            ),
+
+            div(
+              class = "result-card",
+              div(class = "result-label", "Required withdrawal tax rate under EET"),
+              div(class = "result-value", textOutput("required_tax_rate", inline = TRUE)),
+              div(class = "result-sub", "Withdrawal tax rate needed under EET to match the retirement-date value of TTE taxes.")
+            ),
+
+            div(
+              class = "result-card",
+              div(class = "result-label", "EET after-tax balance"),
+              div(class = "result-value", textOutput("after_tax_balance_eet", inline = TRUE)),
+              div(class = "result-sub", "Balance remaining after applying the implied EET withdrawal tax.")
+            )
+          )
+        ),
+
+        div(
+          class = "panel-card chart-wrap",
+          h2("Balance path"),
+          plotOutput("balance_plot", height = "360px")
+        ),
+
+        div(
+          class = "panel-card details-wrap",
+          h2("Detailed schedule"),
+          tags$details(
+            tags$summary("Show annual schedule"),
+            tableOutput("schedule_table")
+          )
+        )
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+
+  fmt_dollar <- function(x) {
+    paste0("$", format(round(x, 2), big.mark = ",", nsmall = 2))
+  }
+
+  fmt_pct <- function(x) {
+    paste0(round(x * 100, 2), "%")
+  }
+
+  calc_results <- reactive({
+
+    n_input <- input$years
+    starting_salary <- input$salary
+    wage_growth <- input$wage_growth
+    employee_rate <- input$employee_rate
+    employer_rate <- input$employer_rate
+    employee_income_tax_rate <- input$employee_income_tax_rate
+    employer_tax_rate <- input$employer_tax_rate
+    earnings_tax_rate <- input$earnings_tax_rate
+    gross_return <- input$gross_return
+    discount_rate <- input$discount_rate
+
+    # Allow fractional years without creating artificial jumps.
+    # For example, 32.9 years is modelled as 32 full years plus 0.9 of a final year.
+    full_years <- floor(n_input)
+    partial_year <- n_input - full_years
+
+    period_lengths <- rep(1, full_years)
+    if (partial_year > 1e-8) {
+      period_lengths <- c(period_lengths, partial_year)
+    }
+
+    n_periods <- length(period_lengths)
+    period_start <- cumsum(c(0, head(period_lengths, -1)))
+    period_end <- cumsum(period_lengths)
+
+    salary_t <- numeric(n_periods)
+    gross_member_contrib <- numeric(n_periods)
+    gross_employer_contrib <- numeric(n_periods)
+    member_income_tax_tte <- numeric(n_periods)
+    employer_tax_tte <- numeric(n_periods)
+    contribution_tax_tte <- numeric(n_periods)
+    total_contrib_tte <- numeric(n_periods)
+    total_contrib_eet <- numeric(n_periods)
+    opening_tte <- numeric(n_periods)
+    opening_eet <- numeric(n_periods)
+    gross_earnings_tte <- numeric(n_periods)
+    earnings_tax_tte <- numeric(n_periods)
+    closing_tte <- numeric(n_periods)
+    gross_earnings_eet <- numeric(n_periods)
+    closing_eet <- numeric(n_periods)
+    total_tax_tte <- numeric(n_periods)
+    tax_value_at_retirement <- numeric(n_periods)
+
+    bal_tte <- 0
+    bal_eet <- 0
+
+    for (p in seq_len(n_periods)) {
+
+      period_length <- period_lengths[p]
+
+      # Salary is the annual salary applying at the start of the period.
+      # Contributions are pro-rated for partial years.
+      salary_t[p] <- starting_salary * ((1 + wage_growth)^period_start[p])
+
+      gross_member_contrib[p] <- salary_t[p] * employee_rate * period_length
+      gross_employer_contrib[p] <- salary_t[p] * employer_rate * period_length
+
+      # Member contributions are paid from taxable income.
+      # The tax is counted as tax paid, but it does not reduce the amount contributed.
+      member_income_tax_tte[p] <- gross_member_contrib[p] * employee_income_tax_rate
+
+      # Employer contributions are reduced by employer contribution tax in the TTE path.
+      employer_tax_tte[p] <- gross_employer_contrib[p] * employer_tax_rate
+      contribution_tax_tte[p] <- member_income_tax_tte[p] + employer_tax_tte[p]
+
+      total_contrib_tte[p] <- gross_member_contrib[p] + gross_employer_contrib[p] - employer_tax_tte[p]
+      total_contrib_eet[p] <- gross_member_contrib[p] + gross_employer_contrib[p]
+
+      opening_tte[p] <- bal_tte
+      opening_eet[p] <- bal_eet
+
+      # Use an effective return for the period length rather than applying a full-year return to a partial year.
+      period_return <- (1 + gross_return)^period_length - 1
+
+      # TTE path
+      avg_balance_tte <- bal_tte + 0.5 * total_contrib_tte[p]
+      gross_earn_tte <- avg_balance_tte * period_return
+      earn_tax_tte <- gross_earn_tte * earnings_tax_rate
+      net_earn_tte <- gross_earn_tte - earn_tax_tte
+
+      bal_tte <- bal_tte + total_contrib_tte[p] + net_earn_tte
+
+      gross_earnings_tte[p] <- gross_earn_tte
+      earnings_tax_tte[p] <- earn_tax_tte
+      closing_tte[p] <- bal_tte
+
+      # EET path
+      avg_balance_eet <- bal_eet + 0.5 * total_contrib_eet[p]
+      gross_earn_eet <- avg_balance_eet * period_return
+      bal_eet <- bal_eet + total_contrib_eet[p] + gross_earn_eet
+
+      gross_earnings_eet[p] <- gross_earn_eet
+      closing_eet[p] <- bal_eet
+
+      total_tax_tte[p] <- contribution_tax_tte[p] + earn_tax_tte
+
+      # Tax is assumed to be paid at the end of each period and carried forward to retirement.
+      tax_value_at_retirement[p] <- total_tax_tte[p] * ((1 + discount_rate)^(n_input - period_end[p]))
+    }
+
+    final_balance_tte <- closing_tte[n_periods]
+    final_balance_eet <- closing_eet[n_periods]
+    balance_increase <- final_balance_eet - final_balance_tte
+    balance_increase_pct <- if (final_balance_tte > 0) balance_increase / final_balance_tte else 0
+    total_tax_paid_nominal <- sum(total_tax_tte)
+    total_tax_value_at_retirement <- sum(tax_value_at_retirement)
+
+    required_tax_rate <- if (final_balance_eet > 0) {
+      total_tax_value_at_retirement / final_balance_eet
+    } else {
+      0
+    }
+
+    after_tax_balance_eet <- final_balance_eet * (1 - required_tax_rate)
+
+    schedule <- data.frame(
+      Period = seq_len(n_periods),
+      Year_End = round(period_end, 2),
+      Period_Length = round(period_lengths, 2),
+      Salary = round(salary_t, 2),
+      Opening_Balance_TTE = round(opening_tte, 2),
+      Opening_Balance_EET = round(opening_eet, 2),
+      Gross_Member_Contribution = round(gross_member_contrib, 2),
+      Gross_Employer_Contribution = round(gross_employer_contrib, 2),
+      Member_Income_Tax_TTE = round(member_income_tax_tte, 2),
+      Employer_Contribution_Tax_TTE = round(employer_tax_tte, 2),
+      Contribution_Tax_TTE = round(contribution_tax_tte, 2),
+      Gross_Earnings_TTE = round(gross_earnings_tte, 2),
+      Earnings_Tax_TTE = round(earnings_tax_tte, 2),
+      Total_TTE_Tax = round(total_tax_tte, 2),
+      Closing_Balance_TTE = round(closing_tte, 2),
+      Gross_Earnings_EET = round(gross_earnings_eet, 2),
+      Closing_Balance_EET = round(closing_eet, 2),
+      Tax_Value_At_Retirement = round(tax_value_at_retirement, 2)
+    )
+
+    list(
+      years = period_end,
+      tte = closing_tte,
+      eet = closing_eet,
+      schedule = schedule,
+      final_balance_tte = final_balance_tte,
+      final_balance_eet = final_balance_eet,
+      balance_increase = balance_increase,
+      balance_increase_pct = balance_increase_pct,
+      total_tax_paid_nominal = total_tax_paid_nominal,
+      total_tax_value_at_retirement = total_tax_value_at_retirement,
+      required_tax_rate = required_tax_rate,
+      after_tax_balance_eet = after_tax_balance_eet
+    )
+  })
+
+  output$final_balance_tte <- renderText({ fmt_dollar(calc_results()$final_balance_tte) })
+  output$final_balance_eet <- renderText({ fmt_dollar(calc_results()$final_balance_eet) })
+
+  output$balance_increase <- renderText({
+    paste0(fmt_dollar(calc_results()$balance_increase), " (", fmt_pct(calc_results()$balance_increase_pct), ")")
+  })
+
+  output$total_tax_paid_nominal <- renderText({ fmt_dollar(calc_results()$total_tax_paid_nominal) })
+  output$tax_value_at_retirement <- renderText({ fmt_dollar(calc_results()$total_tax_value_at_retirement) })
+  output$required_tax_rate <- renderText({ fmt_pct(calc_results()$required_tax_rate) })
+  output$after_tax_balance_eet <- renderText({ fmt_dollar(calc_results()$after_tax_balance_eet) })
+
+  output$schedule_table <- renderTable({
+    calc_results()$schedule
+  }, striped = FALSE, bordered = FALSE, spacing = "xs")
+
+  output$balance_plot <- renderPlot({
+    r <- calc_results()
+    op <- par(no.readonly = TRUE)
+    on.exit(par(op), add = TRUE)
+
+    par(bg = "white", mar = c(4.2, 4.5, 2.5, 1.2))
+    ylim_max <- max(c(r$tte, r$eet)) * 1.05
+
+    plot(
+      r$years, r$tte,
+      type = "l",
+      lwd = 3,
+      col = "#2f78b7",
+      xlab = "Year",
+      ylab = "Balance",
+      main = "",
+      ylim = c(0, ylim_max),
+      las = 1
+    )
+
+    lines(r$years, r$eet, lwd = 3, col = "#82c7f5")
+
+    legend(
+      "topleft",
+      legend = c("TTE", "EET"),
+      col = c("#2f78b7", "#82c7f5"),
+      lwd = 3,
+      bty = "n",
+      cex = 0.95
+    )
+  })
+}
+
+shiny::shinyApp(ui = ui, server = server)
